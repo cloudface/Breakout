@@ -11,8 +11,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
-import org.w3c.dom.css.Rect;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +41,9 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 	private Vector3 touchPos;
 	private int currentBallXVeloc;
 	private int currentBallYVeloc;
-	List<Rectangle> bricksThatWereHit;
+	Rectangle brickThatWasHit;
+
+	private boolean started = false;
 
 	@Override
 	public void create () {
@@ -60,7 +60,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 
 		ball = new Rectangle();
 		ball.x = VIEWPORT_WIDTH / 2 - BALL_SIZE / 2;
-		ball.y = BRICK_AREA_HEIGHT - BALL_SIZE - 50;
+		ball.y = VIEWPORT_HEIGHT - BRICK_AREA_HEIGHT - BALL_SIZE - 20;
 		ball.width = BALL_SIZE;
 		ball.height = BALL_SIZE;
 
@@ -76,8 +76,9 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 		currentBallYVeloc = INITIAL_BALL_VELOC_Y;
 
 		bricks = new ArrayList<Rectangle>();
-		bricksThatWereHit = new ArrayList<Rectangle>();
 		initializeBricks();
+
+		Gdx.input.setInputProcessor(this);
 	}
 
 	private void initializeBricks() {
@@ -101,7 +102,10 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		camera.update();
-		updateBall();
+
+		if(started) {
+			updateBall();
+		}
 
 		drawScene();
 
@@ -145,15 +149,16 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 	}
 
 	private void updateBricks() {
-		bricksThatWereHit.clear();
+		brickThatWasHit = null;
 		for(Rectangle brick : bricks){
 			if(ball.overlaps(brick)){
 				currentBallYVeloc *= -1;
-				bricksThatWereHit.add(brick);
+				brickThatWasHit = brick;
+				break;
 			}
 		}
-		for(Rectangle brick : bricksThatWereHit){
-			destroyBrick(brick);
+		if(brickThatWasHit != null){
+			destroyBrick(brickThatWasHit);
 		}
 	}
 
@@ -178,6 +183,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		started = true;
 		return false;
 	}
 
