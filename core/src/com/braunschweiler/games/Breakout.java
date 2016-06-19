@@ -47,6 +47,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 
 	@Override
 	public void create () {
+		Gdx.input.setInputProcessor(this);
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 		batch = new SpriteBatch();
@@ -57,31 +58,34 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 		brickImage2 = new Texture(Gdx.files.internal("block2.png"));
 		brickImage3 = new Texture(Gdx.files.internal("block3.png"));
 		brickImage4 = new Texture(Gdx.files.internal("block4.png"));
+		touchPos = new Vector3();
 
 		ball = new Rectangle();
+		paddle = new Rectangle();
+		bricks = new ArrayList<Rectangle>();
+
+		initializeGameObjectPositions();
+	}
+
+	private void initializeGameObjectPositions() {
 		ball.x = VIEWPORT_WIDTH / 2 - BALL_SIZE / 2;
 		ball.y = VIEWPORT_HEIGHT - BRICK_AREA_HEIGHT - BALL_SIZE - 20;
 		ball.width = BALL_SIZE;
 		ball.height = BALL_SIZE;
 
-		paddle = new Rectangle();
 		paddle.x = VIEWPORT_WIDTH / 2 - PADDLE_WIDTH / 2;
 		paddle.y = 20;
 		paddle.width = PADDLE_WIDTH;
 		paddle.height = PADDLE_HEIGHT;
 
-		touchPos = new Vector3();
-
 		currentBallXVeloc = MathUtils.random(1, MAX_INITIAL_BALL_VELOC_X);
 		currentBallYVeloc = INITIAL_BALL_VELOC_Y;
 
-		bricks = new ArrayList<Rectangle>();
 		initializeBricks();
-
-		Gdx.input.setInputProcessor(this);
 	}
 
 	private void initializeBricks() {
+		bricks.clear();
 		int brickWidth = VIEWPORT_WIDTH / NUMBER_OF_BRICKS_PER_ROW;
 		int brickHeight = BRICK_AREA_HEIGHT / NUMBER_OF_BRICK_ROWS;
 		for(int i = 0; i < NUMBER_OF_BRICK_ROWS; i++){
@@ -107,9 +111,22 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 			updateBall();
 		}
 
+		if(gameOver()){
+			resetGame();
+		}
+
 		drawScene();
 
 		updatePaddleBasedOnUserInput();
+	}
+
+	private void resetGame() {
+		started = false;
+		initializeGameObjectPositions();
+	}
+
+	private boolean gameOver() {
+		return ball.y < -BALL_SIZE;
 	}
 
 	private void drawScene() {
