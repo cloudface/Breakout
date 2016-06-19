@@ -32,9 +32,6 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 	private Texture ballImage;
 	private Texture paddleImage;
 	private Texture brickImage1;
-	private Texture brickImage2;
-	private Texture brickImage3;
-	private Texture brickImage4;
 	private Rectangle ball;
 	private Rectangle paddle;
 	private List<Rectangle> bricks;
@@ -55,9 +52,6 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 		ballImage = new Texture(Gdx.files.internal("droplet.png"));
 		paddleImage = new Texture(Gdx.files.internal("bucket.png"));
 		brickImage1 = new Texture(Gdx.files.internal("block1.png"));
-		brickImage2 = new Texture(Gdx.files.internal("block2.png"));
-		brickImage3 = new Texture(Gdx.files.internal("block3.png"));
-		brickImage4 = new Texture(Gdx.files.internal("block4.png"));
 		touchPos = new Vector3();
 
 		ball = new Rectangle();
