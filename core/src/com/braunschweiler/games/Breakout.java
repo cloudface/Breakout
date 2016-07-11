@@ -147,7 +147,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 		ball.y += currentBallYVeloc;
 
 		if(ball.overlaps(paddle)){
-			currentBallYVeloc *= -1;
+			updateBallVelocityBasedOnCollision(paddle);
 		}
 		if(ball.x <= 0 || ball.x >= VIEWPORT_WIDTH){
 			currentBallXVeloc *= -1;
@@ -163,7 +163,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 		brickThatWasHit = null;
 		for(Rectangle brick : bricks){
 			if(ball.overlaps(brick)){
-				currentBallYVeloc *= -1;
+				updateBallVelocityBasedOnCollision(brick);
 				brickThatWasHit = brick;
 				break;
 			}
@@ -171,6 +171,37 @@ public class Breakout extends ApplicationAdapter implements InputProcessor{
 		if(brickThatWasHit != null){
 			destroyBrick(brickThatWasHit);
 		}
+	}
+
+	private void updateBallVelocityBasedOnCollision(Rectangle entity) {
+		float xIntrusion;
+		float yIntrusion;
+		if(currentBallXVeloc > 0){
+            //Ball coming from the left
+            xIntrusion = Math.abs(entity.x - (ball.x + ball.width));
+        } else {
+            //Ball coming from the right
+            xIntrusion = Math.abs((entity.x + entity.width) - ball.x);
+        }
+		if(currentBallYVeloc > 0){
+            //Ball coming from above
+            yIntrusion = Math.abs((ball.y + ball.height) - entity.y);
+        } else {
+            //Ball coming from below
+            yIntrusion = Math.abs((entity.y + entity.height) - ball.y);
+        }
+
+		if(xIntrusion < yIntrusion){
+            //Ball is colliding with the sides of the entity
+            currentBallXVeloc *= -1;
+        } else if(yIntrusion < xIntrusion){
+            //Ball is colliding with the top or bottom of the entity
+            currentBallYVeloc *= -1;
+        } else {
+            //Ball is colliding perfectly with one of the corners of the entity
+            currentBallXVeloc *= -1;
+            currentBallYVeloc *= -1;
+        }
 	}
 
 	private void destroyBrick(Rectangle brick) {
