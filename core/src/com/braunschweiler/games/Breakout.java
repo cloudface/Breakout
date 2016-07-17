@@ -17,12 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Breakout extends ApplicationAdapter implements InputProcessor {
-    private static final String LOG_TAG = Breakout.class.getSimpleName();
     public static final int VIEWPORT_WIDTH = 800;
     public static final int VIEWPORT_HEIGHT = 480;
-    public static final int BALL_SIZE = 64;
-    public static final int PADDLE_WIDTH = 256;
-    public static final int PADDLE_HEIGHT = 64;
+    public static final int BALL_SIZE = 32;
+    public static final int PADDLE_WIDTH = 128;
+    public static final int PADDLE_HEIGHT = 32;
     public static final int INITIAL_BALL_VELOC_Y = -5;
     public static final int MAX_INITIAL_BALL_VELOC_X = 5;
     public static final int TOTAL_NUMBER_OF_BRICKS = 20;
@@ -73,7 +72,6 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
         paddleImage = new Texture(Gdx.files.internal("paddle.png"));
         brickImage1 = new Texture(Gdx.files.internal("block1.png"));
         touchPos = new Vector3();
-        bitmapFont.getData().setScale(2.0f, 2.0f);
 
         ball = new Rectangle();
         paddle = new Rectangle();
@@ -166,14 +164,13 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
     }
 
     private void drawText(String text) {
+        textBatch.setProjectionMatrix(camera.combined);
         textBatch.begin();
         textLayout.setText(bitmapFont, text);
         float textWidth = textLayout.width;
         float textHeight = textLayout.height;
-        //float textX = (VIEWPORT_WIDTH / 2) - (textWidth / 2);
-        float textX = (VIEWPORT_WIDTH) ;
-        //float textY = (VIEWPORT_HEIGHT / 2) - (textHeight / 2);
-        float textY = (VIEWPORT_HEIGHT);
+        float textX = (VIEWPORT_WIDTH / 2) - (textWidth / 2);
+        float textY = (VIEWPORT_HEIGHT / 2) - (textHeight / 2);
         bitmapFont.draw(textBatch, text, textX, textY);
         textBatch.end();
     }
