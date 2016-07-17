@@ -6,6 +6,8 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
@@ -34,6 +36,9 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
 
     private OrthographicCamera camera;
     private SpriteBatch batch;
+    private SpriteBatch textBatch;
+    private BitmapFont bitmapFont;
+    private GlyphLayout textLayout;
     private Texture ballImage;
     private Texture paddleImage;
     private Texture brickImage1;
@@ -54,23 +59,30 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
 
     private boolean started = false;
 
+    private GameState gameState;
+
     @Override
     public void create() {
         Gdx.input.setInputProcessor(this);
         camera = new OrthographicCamera();
         camera.setToOrtho(false, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
         batch = new SpriteBatch();
+        textBatch = new SpriteBatch();
+        bitmapFont = new BitmapFont();
+        textLayout = new GlyphLayout();
 
         ballImage = new Texture(Gdx.files.internal("ball.png"));
         paddleImage = new Texture(Gdx.files.internal("paddle.png"));
         brickImage1 = new Texture(Gdx.files.internal("block1.png"));
         touchPos = new Vector3();
+        bitmapFont.getData().setScale(2.0f, 2.0f);
 
         ball = new Rectangle();
         paddle = new Rectangle();
         bricks = new ArrayList<Rectangle>();
         ballAllowedToCollideWithPaddle = true;
 
+        gameState = GameState.Intro;
         initializeGameObjectPositions();
     }
 
@@ -114,21 +126,61 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
 
         camera.update();
 
-        if (started) {
-            updateBall();
+        switch(gameState){
+            case Intro:
+                drawIntroScreen();
+                break;
+            case Playing:
+                updateBall();
+                drawScene();
+                updatePaddleBasedOnUserInput();
+                if(gameOver()){
+                    gameState = GameState.GameOver;
+                }
+                break;
+            case GameOver:
+                drawGameOverScreen();
+                break;
+            default:
+                throw new IllegalStateException("Illegal Game state. Game should be one of: " + GameState.Intro + ", " + GameState.Playing + ", " + GameState.GameOver);
         }
+//        if (started) {
+//            updateBall();
+//        }
+//
+//        if (gameOver()) {
+//            resetGame();
+//        }
+//
+//        drawScene();
+//
+//        updatePaddleBasedOnUserInput();
+    }
 
-        if (gameOver()) {
-            resetGame();
-        }
+    private void drawGameOverScreen() {
+        drawText("Game Over. Touch to start again");
+    }
 
-        drawScene();
+    private void drawIntroScreen() {
+        drawText("Welcome to Breakout! Touch to start!");
+    }
 
-        updatePaddleBasedOnUserInput();
+    private void drawText(String text) {
+        textBatch.begin();
+        textLayout.setText(bitmapFont, text);
+        float textWidth = textLayout.width;
+        float textHeight = textLayout.height;
+        //float textX = (VIEWPORT_WIDTH / 2) - (textWidth / 2);
+        float textX = (VIEWPORT_WIDTH) ;
+        //float textY = (VIEWPORT_HEIGHT / 2) - (textHeight / 2);
+        float textY = (VIEWPORT_HEIGHT);
+        bitmapFont.draw(textBatch, text, textX, textY);
+        textBatch.end();
     }
 
     private void resetGame() {
         started = false;
+        gameState = GameState.Intro;
         ballAllowedToCollideWithPaddle = true;
         initializeGameObjectPositions();
     }
@@ -280,6 +332,16 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         started = true;
+        switch(gameState){
+            case Intro:
+                gameState = GameState.Playing;
+                break;
+            case GameOver:
+                resetGame();
+                break;
+            default:
+                break;
+        }
         return false;
     }
 
@@ -307,5 +369,12 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
         CollidesWithTopOrBottom,
         CollidesWithSides,
         CollidesWithCorner
+    }
+
+    public enum GameState{
+        Intro,
+        Playing,
+        GameOver,
+        Won
     }
 }
