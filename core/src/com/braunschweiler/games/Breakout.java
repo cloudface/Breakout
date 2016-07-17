@@ -57,8 +57,6 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
      */
     private boolean ballAllowedToCollideWithPaddle;
 
-    private boolean started = false;
-
     private GameState gameState;
 
     @Override
@@ -136,29 +134,31 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
                 updatePaddleBasedOnUserInput();
                 if(gameOver()){
                     gameState = GameState.GameOver;
+                } else if(playerWon()){
+                    gameState = GameState.Won;
                 }
                 break;
             case GameOver:
                 drawGameOverScreen();
                 break;
+            case Won:
+                drawVictoryScreen();
+                break;
             default:
                 throw new IllegalStateException("Illegal Game state. Game should be one of: " + GameState.Intro + ", " + GameState.Playing + ", " + GameState.GameOver);
         }
-//        if (started) {
-//            updateBall();
-//        }
-//
-//        if (gameOver()) {
-//            resetGame();
-//        }
-//
-//        drawScene();
-//
-//        updatePaddleBasedOnUserInput();
+    }
+
+    private void drawVictoryScreen() {
+        drawText("Congratulations! You won! Touch to play again!");
+    }
+
+    private boolean playerWon() {
+        return bricks.size() == 0;
     }
 
     private void drawGameOverScreen() {
-        drawText("Game Over. Touch to start again");
+        drawText("Game Over. Touch to play again");
     }
 
     private void drawIntroScreen() {
@@ -179,7 +179,6 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
     }
 
     private void resetGame() {
-        started = false;
         gameState = GameState.Intro;
         ballAllowedToCollideWithPaddle = true;
         initializeGameObjectPositions();
@@ -331,12 +330,14 @@ public class Breakout extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        started = true;
         switch(gameState){
             case Intro:
                 gameState = GameState.Playing;
                 break;
             case GameOver:
+                resetGame();
+                break;
+            case Won:
                 resetGame();
                 break;
             default:
