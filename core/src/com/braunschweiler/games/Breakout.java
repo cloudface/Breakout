@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class Breakout extends ApplicationAdapter implements InputProcessor, Brick.BrickListener {
+public class Breakout extends ApplicationAdapter implements InputProcessor, Brick.BrickListener, Paddle.PaddleListener {
     public static final int VIEWPORT_WIDTH = 800;
     public static final int VIEWPORT_HEIGHT = 480;
     public static final int TOTAL_NUMBER_OF_BRICKS = 20;
@@ -30,13 +30,19 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
     private BitmapFont bitmapFont;
     private GlyphLayout textLayout;
     private List<Ball> balls;
-    private Paddle paddle;
+    private List<Paddle> paddles;
     private List<Brick> bricks;
     private Vector3 touchPos;
     private Brick brickThatWasHit;
 
     private GameState gameState;
     private Ball newBall;
+    private Paddle leftPaddle;
+    private Paddle rightPaddle;
+    private boolean spawnPaddles;
+    private boolean spawnLeftPaddle;
+    private boolean spawnRightPaddle;
+    private Paddle paddleToBeDestroyed;
 
     @Override
     public void create() {
@@ -51,7 +57,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
         touchPos = new Vector3();
 
         balls = new ArrayList<Ball>();
-        paddle = new Paddle(VIEWPORT_WIDTH);
+        paddles = new ArrayList<Paddle>();
         bricks = new ArrayList<Brick>();
 
         gameState = GameState.Intro;
@@ -64,7 +70,11 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
         for(Ball ball : balls){
             ball.initialize(BRICK_AREA_HEIGHT);
         }
-        paddle.initialize();
+        paddles.clear();
+        paddles.add(new Paddle(VIEWPORT_WIDTH, Paddle.PaddlePosition.Center, false, this));
+        for(Paddle paddle : paddles) {
+            paddle.initialize();
+        }
         initializeBricks();
     }
 
@@ -88,7 +98,11 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
         Item item = null;
         int randomNr = MathUtils.random(1, CHANCE_OF_ITEM);
         if(randomNr % 2 == 0){
-            item = new Item(Item.Type.Multiball);
+            if(randomNr >= 5) {
+                item = new Item(Item.Type.Multiball);
+            } else {
+                item = new Item(Item.Type.Multipaddle);
+            }
         }
         return item;
     }
@@ -106,11 +120,13 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
                 break;
             case Playing:
                 for(Ball ball : balls){
-                    ball.updatePosition(bricks, paddle);
+                    ball.updatePosition(bricks, paddles);
                 }
                 updatePaddleBasedOnUserInput();
                 destroyHitBrick();
+                destroyBrokenPaddles();
                 addNewlySpawnedBall();
+                addNewlySpawnedPaddles();
                 if(gameOver()){
                     gameState = GameState.GameOver;
                 } else if(playerWon()){
@@ -126,6 +142,28 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
                 break;
             default:
                 throw new IllegalStateException("Illegal Game state. Game should be one of: " + GameState.Intro + ", " + GameState.Playing + ", " + GameState.GameOver + ", " + GameState.Won);
+        }
+    }
+
+    private void destroyBrokenPaddles() {
+        if(paddleToBeDestroyed != null){
+            paddles.remove(paddleToBeDestroyed);
+            paddleToBeDestroyed = null;
+        }
+    }
+
+    private void addNewlySpawnedPaddles() {
+        if(spawnLeftPaddle){
+            spawnLeftPaddle = false;
+            if (leftPaddle != null) {
+                paddles.add(leftPaddle);
+            }
+        }
+        if(spawnRightPaddle){
+            spawnRightPaddle = false;
+            if (rightPaddle != null) {
+                paddles.add(rightPaddle);
+            }
         }
     }
 
@@ -174,6 +212,8 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
         gameState = GameState.Intro;
         brickThatWasHit = null;
         newBall = null;
+        leftPaddle = null;
+        rightPaddle = null;
         initializeGameObjectPositions();
     }
 
@@ -194,7 +234,9 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
         for(Ball ball : balls) {
             ball.draw(batch);
         }
-        paddle.draw(batch);
+        for(Paddle paddle : paddles) {
+            paddle.draw(batch);
+        }
 
         for (Brick brick : bricks) {
             brick.draw(batch);
@@ -206,7 +248,9 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
         if (Gdx.input.isTouched()) {
             touchPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
             camera.unproject(touchPos);
-            paddle.didTouch(touchPos);
+            for(Paddle paddle : paddles) {
+                paddle.didTouch(touchPos);
+            }
         }
     }
 
@@ -272,8 +316,25 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
                     newBall = new Ball(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
                     newBall.initialize(BRICK_AREA_HEIGHT);
                     break;
+                case Multipaddle:
+                    if(leftPaddle == null){
+                        leftPaddle = new Paddle(VIEWPORT_WIDTH, Paddle.PaddlePosition.Left, true, this);
+                        leftPaddle.initialize();
+                        spawnLeftPaddle = true;
+                    }
+                    if(rightPaddle == null){
+                        rightPaddle = new Paddle(VIEWPORT_WIDTH, Paddle.PaddlePosition.Right, true, this);
+                        rightPaddle.initialize();
+                        spawnRightPaddle = true;
+                    }
+                    break;
             }
         }
+    }
+
+    @Override
+    public void onDestroyPaddle(Paddle paddle) {
+        paddleToBeDestroyed = paddle;
     }
 
     public enum GameState{

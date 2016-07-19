@@ -51,34 +51,36 @@ public class Ball extends Rectangle {
         ballAllowedToCollideWithPaddle = true;
     }
 
-    public void updatePosition(List<Brick> bricks, Paddle paddle) {
+    public void updatePosition(List<Brick> bricks, List<Paddle> paddles) {
         this.x += currentBallXVeloc;
         this.y += currentBallYVeloc;
 
-        if (this.overlaps(paddle)) {
-            if (ballAllowedToCollideWithPaddle) {
-                BallCollisionInfo ballCollisionInfo = updateBallVelocityBasedOnCollision(paddle);
-                ballAllowedToCollideWithPaddle = false;
-                if (ballCollisionInfo == BallCollisionInfo.CollidesWithTopOrBottom) {
-                    Paddle.PaddleCollisionInfo paddleCollisionInfo = paddle.computeCollisionWithBall(this);
-                    switch(paddleCollisionInfo){
-                        case LeftCollisionZone:
-                            //We are colliding with the left part of the top of the paddle. Give ball
-                            //a certain X velocity
-                            currentBallXVeloc = -COLLISION_ZONE_X_VELOC;
-                            break;
-                        case RightCollisionZone:
-                            //We are colliding with the right part of the top of the paddle. Give ball
-                            //a certain X velocity
-                            currentBallXVeloc = COLLISION_ZONE_X_VELOC;
-                            break;
-                        default:
-                            //Ball collided with the center zone. Reduce the x velocity until a mininum
-                            float prospectiveXVeloc = currentBallXVeloc * X_VELOC_REDUCTION_FACTOR;
-                            if(prospectiveXVeloc >= MINIMUM_X_VELOC){
-                                currentBallXVeloc = prospectiveXVeloc;
-                            }
-                            break;
+        for(Paddle paddle : paddles) {
+            if (this.overlaps(paddle)) {
+                if (ballAllowedToCollideWithPaddle) {
+                    BallCollisionInfo ballCollisionInfo = updateBallVelocityBasedOnCollision(paddle);
+                    ballAllowedToCollideWithPaddle = false;
+                    if (ballCollisionInfo == BallCollisionInfo.CollidesWithTopOrBottom) {
+                        Paddle.PaddleCollisionInfo paddleCollisionInfo = paddle.computeCollisionWithBall(this);
+                        switch (paddleCollisionInfo) {
+                            case LeftCollisionZone:
+                                //We are colliding with the left part of the top of the paddle. Give ball
+                                //a certain X velocity
+                                currentBallXVeloc = -COLLISION_ZONE_X_VELOC;
+                                break;
+                            case RightCollisionZone:
+                                //We are colliding with the right part of the top of the paddle. Give ball
+                                //a certain X velocity
+                                currentBallXVeloc = COLLISION_ZONE_X_VELOC;
+                                break;
+                            default:
+                                //Ball collided with the center zone. Reduce the x velocity until a mininum
+                                float prospectiveXVeloc = currentBallXVeloc * X_VELOC_REDUCTION_FACTOR;
+                                if (prospectiveXVeloc >= MINIMUM_X_VELOC) {
+                                    currentBallXVeloc = prospectiveXVeloc;
+                                }
+                                break;
+                        }
                     }
                 }
             }

@@ -22,6 +22,7 @@ public class Item extends Rectangle {
     }
 
     public enum Type {
-        Multiball
+        Multiball,
+        Multipaddle
     }
 }

@@ -24,6 +24,9 @@ public class Brick extends Rectangle {
                 case Multiball:
                     brickImage = new Texture(Gdx.files.internal("block2.png"));
                     break;
+                case Multipaddle:
+                    brickImage = new Texture(Gdx.files.internal("block3.png"));
+                    break;
                 default:
                     brickImage = new Texture(Gdx.files.internal("block1.png"));
                     break;

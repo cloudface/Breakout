@@ -13,12 +13,22 @@ public class Paddle extends Rectangle {
     private static final int PADDLE_WIDTH = 128;
     private static final int PADDLE_HEIGHT = 32;
     private static final int PADDLE_NEUTRAL_COLLISION_ZONE = PADDLE_WIDTH / 8;
+    private static final int SPACE_BETWEEN_PADDLES = 60;
+    private static final int NR_OF_HITS_BEFORE_DESTROYED = 3;
 
     private int viewportWidth;
+    private PaddlePosition paddlePosition;
+    private boolean destructible;
+    private PaddleListener listener;
     private Texture paddleImage;
+    private int paddleOffset;
+    private int nrOfCollisions;
 
-    public Paddle(int viewportWidth) {
+    public Paddle(int viewportWidth, PaddlePosition paddlePosition, boolean destructible, PaddleListener listener) {
         this.viewportWidth = viewportWidth;
+        this.paddlePosition = paddlePosition;
+        this.destructible = destructible;
+        this.listener = listener;
         paddleImage = new Texture(Gdx.files.internal("paddle.png"));
     }
 
@@ -27,6 +37,14 @@ public class Paddle extends Rectangle {
         this.y = 20;
         this.width = PADDLE_WIDTH;
         this.height = PADDLE_HEIGHT;
+
+        if(paddlePosition == PaddlePosition.Left){
+            paddleOffset = -(PADDLE_WIDTH + SPACE_BETWEEN_PADDLES);
+        } else if(paddlePosition == PaddlePosition.Right){
+            paddleOffset = (PADDLE_WIDTH + SPACE_BETWEEN_PADDLES);
+        }
+        this.x += paddleOffset;
+        nrOfCollisions = 0;
     }
 
     public PaddleCollisionInfo computeCollisionWithBall(Ball ball) {
@@ -45,11 +63,18 @@ public class Paddle extends Rectangle {
             collisionInfo = PaddleCollisionInfo.CenterCollisionZone;
         }
 
+        if(destructible) {
+            nrOfCollisions++;
+            if (nrOfCollisions >= NR_OF_HITS_BEFORE_DESTROYED) {
+                listener.onDestroyPaddle(this);
+            }
+        }
+
         return collisionInfo;
     }
 
     public void didTouch(Vector3 touchPos) {
-        this.x = touchPos.x - PADDLE_WIDTH / 2;
+        this.x = (touchPos.x - PADDLE_WIDTH / 2) + paddleOffset;
     }
 
     public void draw(SpriteBatch batch) {
@@ -60,5 +85,16 @@ public class Paddle extends Rectangle {
         CenterCollisionZone,
         LeftCollisionZone,
         RightCollisionZone
+    }
+
+    public enum PaddlePosition {
+        Left,
+        Center,
+        Right
+    }
+
+    public interface PaddleListener {
+
+        void onDestroyPaddle(Paddle paddle);
     }
 }
