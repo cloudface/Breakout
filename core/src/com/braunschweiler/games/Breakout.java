@@ -148,6 +148,12 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
     private void destroyBrokenPaddles() {
         if(paddleToBeDestroyed != null){
             paddles.remove(paddleToBeDestroyed);
+            if(paddleToBeDestroyed.equals(leftPaddle)){
+                leftPaddle = null;
+            }
+            if(paddleToBeDestroyed.equals(rightPaddle)){
+                rightPaddle = null;
+            }
             paddleToBeDestroyed = null;
         }
     }

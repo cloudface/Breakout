@@ -21,6 +21,8 @@ public class Paddle extends Rectangle {
     private boolean destructible;
     private PaddleListener listener;
     private Texture paddleImage;
+    private Texture paddleImageDamaged1;
+    private Texture paddleImageDamaged2;
     private int paddleOffset;
     private int nrOfCollisions;
 
@@ -30,6 +32,8 @@ public class Paddle extends Rectangle {
         this.destructible = destructible;
         this.listener = listener;
         paddleImage = new Texture(Gdx.files.internal("paddle.png"));
+        paddleImageDamaged1 = new Texture(Gdx.files.internal("paddle_damaged_1.png"));
+        paddleImageDamaged2 = new Texture(Gdx.files.internal("paddle_damaged_2.png"));
     }
 
     public void initialize() {
@@ -78,7 +82,17 @@ public class Paddle extends Rectangle {
     }
 
     public void draw(SpriteBatch batch) {
-        batch.draw(paddleImage, this.x, this.y);
+        switch(nrOfCollisions){
+            case 0:
+                batch.draw(paddleImage, this.x, this.y);
+                break;
+            case 1:
+                batch.draw(paddleImageDamaged1, this.x, this.y);
+                break;
+            case 2:
+                batch.draw(paddleImageDamaged2, this.x, this.y);
+                break;
+        }
     }
 
     public enum PaddleCollisionInfo{
