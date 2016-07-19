@@ -10,18 +10,31 @@ import com.badlogic.gdx.math.Rectangle;
  */
 public class Brick extends Rectangle {
 
+    private Item item;
     private BrickListener listener;
     private Texture brickImage;
 
-    public Brick(BrickListener listener){
+    public Brick(Item item, BrickListener listener){
+        this.item = item;
         this.listener = listener;
-        brickImage = new Texture(Gdx.files.internal("block1.png"));
+        if(item == null) {
+            brickImage = new Texture(Gdx.files.internal("block1.png"));
+        } else {
+            switch(item.getType()){
+                case Multiball:
+                    brickImage = new Texture(Gdx.files.internal("block2.png"));
+                    break;
+                default:
+                    brickImage = new Texture(Gdx.files.internal("block1.png"));
+                    break;
+            }
+        }
     }
 
     public boolean collisionWithBall(Ball ball) {
         boolean collisionOccurred = false;
         if (ball.overlaps(this)) {
-            listener.onBallCollidedWithBrick(this);
+            listener.onBallCollidedWithBrick(this, item);
             collisionOccurred = true;
         }
         return collisionOccurred;
@@ -33,6 +46,6 @@ public class Brick extends Rectangle {
 
     public interface BrickListener {
 
-        void onBallCollidedWithBrick(Brick brick);
+        void onBallCollidedWithBrick(Brick brick, Item item);
     }
 }

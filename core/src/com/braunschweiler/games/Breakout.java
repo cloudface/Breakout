@@ -5,12 +5,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.ArrayList;
@@ -24,19 +22,21 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
     public static final int NUMBER_OF_BRICK_ROWS = 4;
     public static final int NUMBER_OF_BRICKS_PER_ROW = TOTAL_NUMBER_OF_BRICKS / NUMBER_OF_BRICK_ROWS;
     public static final int BRICK_AREA_HEIGHT = VIEWPORT_HEIGHT / 2 - 100;
+    public static final int CHANCE_OF_ITEM = 10;
 
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private SpriteBatch textBatch;
     private BitmapFont bitmapFont;
     private GlyphLayout textLayout;
-    private Ball ball;
+    private List<Ball> balls;
     private Paddle paddle;
     private List<Brick> bricks;
     private Vector3 touchPos;
     private Brick brickThatWasHit;
 
     private GameState gameState;
+    private Ball newBall;
 
     @Override
     public void create() {
@@ -50,7 +50,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
 
         touchPos = new Vector3();
 
-        ball = new Ball(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+        balls = new ArrayList<Ball>();
         paddle = new Paddle(VIEWPORT_WIDTH);
         bricks = new ArrayList<Brick>();
 
@@ -59,7 +59,11 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
     }
 
     private void initializeGameObjectPositions() {
-        ball.initialize(BRICK_AREA_HEIGHT);
+        balls.clear();
+        balls.add(new Ball(VIEWPORT_WIDTH, VIEWPORT_HEIGHT));
+        for(Ball ball : balls){
+            ball.initialize(BRICK_AREA_HEIGHT);
+        }
         paddle.initialize();
         initializeBricks();
     }
@@ -70,7 +74,7 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
         int brickHeight = BRICK_AREA_HEIGHT / NUMBER_OF_BRICK_ROWS;
         for (int i = 0; i < NUMBER_OF_BRICK_ROWS; i++) {
             for (int j = 0; j < NUMBER_OF_BRICKS_PER_ROW; j++) {
-                Brick brick = new Brick(this);
+                Brick brick = new Brick(generateRandomItem(), this);
                 brick.x = j * brickWidth;
                 brick.y = VIEWPORT_HEIGHT - brickHeight - (i * brickHeight);
                 brick.width = brickWidth;
@@ -78,6 +82,15 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
                 bricks.add(brick);
             }
         }
+    }
+
+    private Item generateRandomItem() {
+        Item item = null;
+        int randomNr = MathUtils.random(1, CHANCE_OF_ITEM);
+        if(randomNr % 2 == 0){
+            item = new Item(Item.Type.Multiball);
+        }
+        return item;
     }
 
     @Override
@@ -92,9 +105,12 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
                 drawIntroScreen();
                 break;
             case Playing:
-                ball.updatePosition(bricks, paddle);
+                for(Ball ball : balls){
+                    ball.updatePosition(bricks, paddle);
+                }
                 updatePaddleBasedOnUserInput();
                 destroyHitBrick();
+                addNewlySpawnedBall();
                 if(gameOver()){
                     gameState = GameState.GameOver;
                 } else if(playerWon()){
@@ -110,6 +126,13 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
                 break;
             default:
                 throw new IllegalStateException("Illegal Game state. Game should be one of: " + GameState.Intro + ", " + GameState.Playing + ", " + GameState.GameOver + ", " + GameState.Won);
+        }
+    }
+
+    private void addNewlySpawnedBall() {
+        if(newBall != null) {
+            balls.add(newBall);
+            newBall = null;
         }
     }
 
@@ -150,17 +173,27 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
     private void resetGame() {
         gameState = GameState.Intro;
         brickThatWasHit = null;
+        newBall = null;
         initializeGameObjectPositions();
     }
 
     private boolean gameOver() {
-        return ball.outOfBounds();
+        boolean allBallsOutOfBounds = true;
+        for(Ball ball : balls){
+            if(!ball.outOfBounds()){
+                allBallsOutOfBounds = false;
+                break;
+            }
+        }
+        return allBallsOutOfBounds;
     }
 
     private void drawScene() {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        ball.draw(batch);
+        for(Ball ball : balls) {
+            ball.draw(batch);
+        }
         paddle.draw(batch);
 
         for (Brick brick : bricks) {
@@ -231,8 +264,16 @@ public class Breakout extends ApplicationAdapter implements InputProcessor, Bric
     }
 
     @Override
-    public void onBallCollidedWithBrick(Brick brick) {
+    public void onBallCollidedWithBrick(Brick brick, Item item) {
         brickThatWasHit = brick;
+        if(item != null){
+            switch(item.getType()){
+                case Multiball:
+                    newBall = new Ball(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+                    newBall.initialize(BRICK_AREA_HEIGHT);
+                    break;
+            }
+        }
     }
 
     public enum GameState{
