@@ -14,7 +14,7 @@ import com.badlogic.gdx.math.Vector3;
 import java.util.ArrayList;
 import java.util.List;
 
-
+//VCS test
 public class Breakout extends ApplicationAdapter implements InputProcessor, Brick.BrickListener, Paddle.PaddleListener {
     public static final int VIEWPORT_WIDTH = 800;
     public static final int VIEWPORT_HEIGHT = 480;
